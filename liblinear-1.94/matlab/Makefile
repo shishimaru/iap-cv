@@ -1,6 +1,7 @@
 # This Makefile is used under Linux
 
-MATLABDIR = /usr/local/MATLAB/R2012b
+#MATLABDIR = /usr/local/MATLAB/R2012b
+MATLABDIR = /Applications/MATLAB_R2012a.app
 CXX = g++
 #CXX = g++-3.3
 CC = gcc
