@@ -31,7 +31,7 @@ c.verbosity = 1;
 % Use the following settings for your first try:
 %  - feature is color
 %  - dictionary size is 20
-feature = 'ssim';
+feature = 'hog2x2';
 c.feature_config.(feature).dictionary_size=20;
 
 % Some default parameters for faster learning (do not modify)
@@ -74,7 +74,7 @@ model = train(info.trainlabels', sparse(double(train_features)), svm_options);
 
 
 % subplot images in the order of confidence
-[~,b] = sort(predicted_conf, 'descend');
+[v,b] = sort(predicted_conf, 'descend');
 ha=tight_subplot(5,6,[0.01 0.01], [0.05 0.05], [0.05 0.05]);
 for i = 1:30
     axes(ha(i));
@@ -82,7 +82,4 @@ for i = 1:30
     image(im);
     axis off;
 end
-
-
-
 

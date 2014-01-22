@@ -38,6 +38,7 @@ function last_assignment = kMeans(data,k)
         error('k has to be larger than number of samples');
     else
         % Initialize cluster centers
+        centroid = zeros(k, d);
         for i = 1:k
             centroid(i,:) = data(i,:);
         end
@@ -51,7 +52,6 @@ function last_assignment = kMeans(data,k)
             % Take a look at funcitons [pdist2] and [min]
             % EDIT HERE.........
             
-            tmp = last_assignment;
             D = pdist2(data, centroid);
             [~, tmp] = min(D, [], 2);
             
