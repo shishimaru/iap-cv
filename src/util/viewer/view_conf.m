@@ -1,10 +1,10 @@
 function view_conf(imgFile, bboxes);
 %% show image with bounding boxes whose lines are changed on each confidence.
-%% imgFile : filename of image
-%% bboxes  : matrix of bbox with confidence
-%%           bbox = [xmin xmax ymin ymax conf;
-%%                   ...
-%%                  ];
+% imgFile : filename of image
+% bboxes  : matrix of bbox with confidence
+%           bbox = [xmin xmax ymin ymax conf;
+%                   ...
+%                  ];
 
 % range of color sheet
 NC = 200;
