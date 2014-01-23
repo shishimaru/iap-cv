@@ -4,8 +4,7 @@ dataset_folder = '../viscomp/';
 devkit_folder  = '../devkit/';
 cache_folder   = '../cache/image';
 dataset        = 'train';
-% feature        = 'hog2x2';
-feature        = 'gist'; % 20:X
+feature        = 'hog2x2'; % select only from hog2x2, hog3x3, sift(slow), ssim(too slow)
 desc_per_img   = 100; % shouldn't change
 dic_size       = 1000; % should change
 
@@ -44,6 +43,36 @@ else
             img = repmat(img, [1 1 3]);
         end
 
+        % crop a image with one compounded bbox
+        c_xmin = inf;
+        c_xmax = -inf;
+        c_ymin = inf;
+        c_ymax = -inf;
+        for j = 1:length(annotations{i}.annotation.object)
+            xmin = round(str2double(annotations{i}.annotation.object(j).bndbox.xmin)+1);
+            xmax = round(str2double(annotations{i}.annotation.object(j).bndbox.xmax)+1);
+            ymin = round(str2double(annotations{i}.annotation.object(j).bndbox.ymin)+1);
+            ymax = round(str2double(annotations{i}.annotation.object(j).bndbox.ymax)+1);
+            if(xmin < c_xmin), c_xmin = xmin; end;
+            if(xmax > c_xmax), c_xmax = xmax; end;
+            if(ymin < c_ymin), c_ymin = ymin; end;
+            if(ymax > c_ymax), c_ymax = ymax; end;
+        end;
+        if 0,
+          figure(111);
+          imshow(img);
+          pause;
+          close(111);
+          
+          figure(111);
+          img = img(c_ymin:c_ymax,c_xmin:c_xmax,:);
+          imshow(img);
+          pause;
+          close(111);
+        else,
+          img = img(c_ymin:c_ymax,c_xmin:c_xmax,:);
+        end;
+
         % Extract descriptors
         feat = extract_feature(feature, img, c);
         r = randperm(size(feat, 1));
@@ -57,10 +86,6 @@ fprintf('done\n');
 
 %% Whiten data
 %TODO: not implemented yet!
-?? sigma = cov(descriptors);
-?? mu = mean(descriptors);
-?? descriptors = sigma .^ (-0.5) * (descriptors - repmat(mu, size(descriptors,1), 1));
-
 
 %% Build a dictionary
 fprintf('building a dictionary...');
@@ -113,7 +138,7 @@ else
         % Get a label based on the annotation
         Yall(end+1,1) = str2double(annotations{i}.annotation.classes.(cls));
     end
-    ?? Xall = (Xall - mu) / (sigma ^ 0.5);
+
     save(filename, 'Xall', 'Yall');
 end
 fprintf('done\n');

@@ -19,7 +19,7 @@ function evaluateResult(predicted_labels)
   average_precision = zeros(length(classes), 1);
 
   %% DEBUG
-  annotations_val = annotations_val(1:300,:);
+  annotations_val = annotations_val(1:1000,:);
   
   % compute average precision, using rand to predict the confidence for each image
   for i=1:length(classes)
