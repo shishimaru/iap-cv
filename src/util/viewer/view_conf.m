@@ -9,7 +9,6 @@ function view_conf(imgFile, bboxes);
 % range of color sheet
 NC = 200;
 
-figure;
 hold on;
 imshow(imgFile);
 title(sprintf('FILE: %s', imgFile));
