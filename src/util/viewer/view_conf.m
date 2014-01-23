@@ -1,4 +1,4 @@
-function view_conf(imgFile, bboxes);
+function view_conf(imgFile, bboxes, classObj);
 %% show image with bounding boxes whose lines are changed on each confidence.
 % imgFile : filename of image
 % bboxes  : matrix of bbox with confidence
@@ -9,9 +9,21 @@ function view_conf(imgFile, bboxes);
 % range of color sheet
 NC = 200;
 
+classes = {'airplane','bicycle','car','cup_or_mug','dog','guitar',...
+           'hamburger','sofa','traffic_light','person'};
+class = ''
+for i=1:length(classes),
+  name = classes{i};
+  flag = str2num(classObj.(name));
+  if(flag == 1),
+    class = name;
+  end;
+end;
+
+
 hold on;
 imshow(imgFile);
-title(sprintf('FILE: %s', imgFile));
+title(sprintf('FILE: %s, CLASS: %s', imgFile, class));
 
 % draw bboxes
 for i=1:size(bboxes,1),
