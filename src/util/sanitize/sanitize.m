@@ -138,5 +138,21 @@ model = train(Yall, sparse(Xall), svm_options);
 svm_options = '-b 1';
 [predicted_label, accuracy, prob] = predict(Yall, sparse(Xall), model, svm_options);
 
+%% Show classification scores
+if 1
+    prob_pos = prob(find(Yall==1));
+    prob_neg = prob(find(Yall==0));
+    [~,I] = sort(prob_pos, 'descend');
+    prob_pos = prob_pos(I);
+    [~,I] = sort(prob_neg, 'descend');
+    prob_neg = prob_neg(I);
+    prob_all = [prob_pos;prob_neg];
+    plot(prob_all, 'b.');
+    hold on;
+    plot(prob_pos, 'r.');
+    ylabel('scores');
+    xlabel('samples');
+end
 
 end
+
