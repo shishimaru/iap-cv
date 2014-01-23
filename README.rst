@@ -2,19 +2,7 @@
 Working directory of Computer Vision
 ------------------------------------
 
-Section1
---------
+Dependency
+----------
 
-Section2
---------
-
-Section3
---------
-
-- Vehicle
-  - Car
-  - Bicycle
-- Fruits
-  - Apple
-- Mac
-
+* Place viscomp directory including train/validation/test data under root.
