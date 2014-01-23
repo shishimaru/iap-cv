@@ -7,6 +7,7 @@ dataset        = 'train';
 feature        = 'hog2x2'; % select only from hog2x2, hog3x3, sift(slow), ssim(too slow)
 desc_per_img   = 100; % shouldn't change
 dic_size       = 1000; % should change
+flag_white     = true;
 
 %% Load dataset
 load(fullfile(devkit_folder, 'filelists.mat'));
@@ -85,7 +86,7 @@ end
 fprintf('done\n');
 
 %% Whiten data
-if 1
+if flag_white
   sigma = cov(descriptors);
   mu = mean(descriptors);
   sigma_inv_half = sigma ^ (-0.5);
@@ -120,13 +121,46 @@ else
         if size(img, 3) == 1
             img = repmat(img, [1 1 3]);
         end
+        
+        % crop a image with one compounded bbox
+        c_xmin = inf;
+        c_xmax = -inf;
+        c_ymin = inf;
+        c_ymax = -inf;
+        for j = 1:length(annotations{i}.annotation.object)
+            xmin = round(str2double(annotations{i}.annotation.object(j).bndbox.xmin)+1);
+            xmax = round(str2double(annotations{i}.annotation.object(j).bndbox.xmax)+1);
+            ymin = round(str2double(annotations{i}.annotation.object(j).bndbox.ymin)+1);
+            ymax = round(str2double(annotations{i}.annotation.object(j).bndbox.ymax)+1);
+            if(xmin < c_xmin), c_xmin = xmin; end;
+            if(xmax > c_xmax), c_xmax = xmax; end;
+            if(ymin < c_ymin), c_ymin = ymin; end;
+            if(ymax > c_ymax), c_ymax = ymax; end;
+        end;
+        if 0,
+          figure(111);
+          imshow(img);
+          pause;
+          close(111);
+          
+          figure(111);
+          img = img(c_ymin:c_ymax,c_xmin:c_xmax,:);
+          imshow(img);
+          pause;
+          close(111);
+        else,
+          img = img(c_ymin:c_ymax,c_xmin:c_xmax,:);
+        end;
+
 
         % Extract descriptors
         feat = extract_feature(feature, img, c);
 
 		% Whiten descriptors
-        feat = sigma_inv_half * (feat' - repmat(mu', [1 size(descriptors,1)]));
-        feat = feat';
+        if flag_white,
+          feat = sigma_inv_half * (feat' - repmat(mu', [1 size(descriptors,1)]));
+          feat = feat';
+        end;
 
         x = zeros(1, dic_size);
         for k = 1:size(feat, 1)
