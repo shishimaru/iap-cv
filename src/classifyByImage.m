@@ -85,7 +85,13 @@ end
 fprintf('done\n');
 
 %% Whiten data
-%TODO: not implemented yet!
+if 1
+  sigma = cov(descriptors);
+  mu = mean(descriptors);
+  sigma_inv_half = sigma ^ (-0.5);
+  descriptors = sigma_inv_half * (descriptors' - repmat(mu', [1 size(descriptors,1)]));
+  descriptors = descriptors';
+end
 
 %% Build a dictionary
 fprintf('building a dictionary...');
@@ -117,6 +123,11 @@ else
 
         % Extract descriptors
         feat = extract_feature(feature, img, c);
+
+		% Whiten descriptors
+        feat = sigma_inv_half * (feat' - repmat(mu', [1 size(descriptors,1)]));
+        feat = feat';
+
         x = zeros(1, dic_size);
         for k = 1:size(feat, 1)
           % Find the closest centroid
