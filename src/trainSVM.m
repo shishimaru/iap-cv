@@ -20,7 +20,7 @@ end
 c = conf();
 
 %% Extract features for SVM training
-fprintf('extracting features for SVM training...');
+fprintf('creating X features for SVM training...');
 filename = fullfile(cache_folder, sprintf('x_train.mat'));
 if exist(filename, 'file')
     load(filename);
