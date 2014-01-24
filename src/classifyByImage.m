@@ -158,7 +158,7 @@ else
 
 		% Whiten descriptors
         if flag_white,
-          feat = sigma_inv_half * (feat' - repmat(mu', [1 size(descriptors,1)]));
+          feat = sigma_inv_half * (feat' - repmat(mu', [1 size(feat,1)]));
           feat = feat';
         end;
 
