@@ -75,24 +75,36 @@ else
           feat = feat';
         end
 
-        x = zeros(1, size(dictionary, 1));
-        for k = 1:size(feat, 1)
-          % Find the closest centroid
-          closest_l = 0;
-          min_dist = inf;
-          for l = 1:size(dictionary, 1)
-            dist = dictionary(l,:) - feat(k,:);
-            dist = sum(dist .^ 2);
-            if dist < min_dist
-              min_dist = dist;
-              closest_l = l;
+        if 0
+            tic;
+            x = zeros(1, size(dictionary, 1));
+            for k = 1:size(feat, 1)
+              % Find the closest centroid
+              closest_l = 0;
+              min_dist = inf;
+              for l = 1:size(dictionary, 1)
+                dist = dictionary(l,:) - feat(k,:);
+                dist = sum(dist .^ 2);
+                if dist < min_dist
+                  min_dist = dist;
+                  closest_l = l;
+                end
+              end
+              x(closest_l) = x(closest_l) + 1;
             end
-          end
-          x(closest_l) = x(closest_l) + 1;
+            x = x ./ (sum(x) + eps); % normalize
+            Xall(end+1,:) = x;
+            toc;
+        else
+            %tic;
+            dist = pdist2(feat, dictionary);
+            [~,I] = min(dist, [], 2); % in this case, min returns the smallest element of each row
+            x = hist(I, [1:size(dictionary, 2)]);
+            %toc;
         end
-        x = x ./ (sum(x) + eps); % normalize
-        Xall(end+1,:) = x;
     end
+    
+    Xall = Xall ./ repmat(sum(Xall, 2)+eps, [1 size(Xall, 2)]); % normalize Xall
 
     save(filename, 'Xall');
     
