@@ -8,7 +8,8 @@ devkit_folder  = '../devkit/';
 load(fullfile(devkit_folder, 'classes.mat')); % load classes
 
 % DEBUG: reduce the number of classes
-if(flag_debug)
+% if(flag_debug)
+if 0
     classes = {'car', 'airplane'}; % target only one class 'car'
 end
 

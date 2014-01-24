@@ -67,7 +67,7 @@ else
 
 
         % Extract descriptors
-        feat = extract_feature(feature, img, c);
+        feat = extract_feature(featureName, img, c);
 
 		% Whiten descriptors
         if flag_white
@@ -143,6 +143,7 @@ if 1
     plot(prob_pos, 'r.');
     ylabel('scores');
     xlabel('samples');
+    drawnow;
 end
 
 end

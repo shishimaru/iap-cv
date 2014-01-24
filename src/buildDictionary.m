@@ -64,7 +64,7 @@ else
         end
 
         % Extract descriptors
-        feat = extract_feature(feature, img, c);
+        feat = extract_feature(featureName, img, c);
         r = randperm(size(feat, 1));
         feat_shrinked = feat(r(1:min(length(r), desc_per_img)), :);
         descriptors(end+1:end+size(feat_shrinked,1),:) = feat_shrinked;

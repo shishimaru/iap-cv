@@ -1,13 +1,9 @@
 function [] = serialize(confidence, dataName)
+globals();
 % confidence : [(# of image), (# of classes)]
 % dataName   : 'test'(default) or 'val'
 
 if(nargin == 1), dataName = 'test'; end
-
-% IMPORTANT: UPDATE DATASET FOLDER
-dataset_folder = '../viscomp/';
-devkit_folder = '../devkit/';
-cache_folder = '../cache/';
 
 % load information about test data
 fprintf('loading classes...');
@@ -20,7 +16,7 @@ end
 
 % load annotations
 fprintf('loading annotations_%s.mat...', dataName);
-load(fullfile(cache_folder, sprintf('annotations_%s.mat', dataName)));
+load(fullfile(cache_folder, '/', sprintf('annotations_%s.mat', dataName)));
 if(strcmp(dataName, 'val') == 1)
     annotations = annotations_val;
 elseif(strcmp(dataName, 'test') == 1)
