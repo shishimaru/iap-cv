@@ -102,6 +102,7 @@ else
             dist = pdist2(feat, dictionary);
             [~,I] = min(dist, [], 2); % in this case, min returns the smallest element of each row
             x = hist(I, [1:size(dictionary, 2)]);
+            Xall(end+1,:) = x;
         end
     end
 
@@ -137,6 +138,7 @@ fprintf('done\n');
 
 %% Show classification scores
 if 1
+    clf;
     prob_pos = prob(find(Yall==1));
     prob_neg = prob(find(Yall==0));
     [~,I] = sort(prob_pos, 'descend');
