@@ -1,19 +1,6 @@
 function [model] = trainSVM(cls, dictionary, sigma_inv_half, mu)
+globals();
 % Train SVM model for cls
-
-%% Set flags
-dataset_folder = '../viscomp/';
-cache_folder   = '../cache/image';
-dataset        = 'train';
-feature        = 'hog2x2'; % select only from hog2x2, hog3x3, sift(slow), ssim(too slow)
-debug          = true; % if enabled, we will use small subset of data
-
-if exist('sigma_inv_half', 'var')
-    flag_white = true;
-else
-    flag_white = false;
-end
-
 
 %% Load annotations
 filename = fullfile('../cache/annotations_train.mat');
@@ -24,27 +11,24 @@ else
     error('cannot load %s\n', filename)
 end
 
-
-if debug
-    num_imgs = 10;
+if flag_debug
+    num_imgs = debug_num_imgs;
 else
     num_imgs = length(annotations);
 end
 
 c = conf();
 
-
 %% Extract features for SVM training
 fprintf('extracting features for SVM training...');
-filename = fullfile(cache_folder, sprintf('training_data_%s.mat', cls));
+filename = fullfile(cache_folder, sprintf('x_train.mat'));
 if exist(filename, 'file')
     load(filename);
 else
     Xall = zeros(0,0);
-    Yall = zeros(0,0);
     for i = 1:num_imgs
         % Read an image
-        img = imread(fullfile(dataset_folder, dataset, 'images', [annotations{i}.annotation.filename '.jpg']));
+        img = imread(fullfile(dataset_folder, 'train', 'images', [annotations{i}.annotation.filename '.jpg']));
 
         % Make sure the image is color
         if size(img, 3) == 1
@@ -108,18 +92,39 @@ else
         end
         x = x ./ (sum(x) + eps); % normalize
         Xall(end+1,:) = x;
+    end
 
+    save(filename, 'Xall');
+    
+end
+fprintf('done\n');
+
+%% Create Y
+fprintf('Creating Y...');
+Yall = zeros(0,0);
+filename = fullfile(cache_folder, sprintf('y_train_%s.mat', cls));
+if exist(filename, 'file')
+    load(filename);
+else
+    Yall = zeros(0,0);
+    for i = 1:num_imgs
         % Get a label based on the annotation
         Yall(end+1,1) = str2double(annotations{i}.annotation.classes.(cls));
     end
-
-    save(filename, 'Xall', 'Yall');
+    save(filename, 'Yall');
 end
 fprintf('done\n');
 
 %% Train a model
-svm_options = '-s 2 -B 1 -c 1 -q';
-model = train(Yall, sparse(Xall), svm_options);
+fprintf('Train %s model...', cls);
+filename = fullfile(cache_folder, sprintf('model_%s.mat', cls));
+if exist(filename, 'file')
+    load(filename);
+else
+    svm_options = '-s 2 -B 1 -c 1 -q';
+    model = train(Yall, sparse(Xall), svm_options);
+    save(filename, 'model');
+end
 
 % Calculate confidences for the training data
 [predicted_label, accuracy, prob] = predict(Yall, sparse(Xall), model);

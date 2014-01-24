@@ -1,44 +1,36 @@
-function evaluateModel(model, cls, sigma_inv_half, mu)
+function [prob, AP] = evaluateModel(dataset, model, cls, dictionary, sigma_inv_half, mu)
+globals();
 % Evaluate the model with validation set
 
-%% Set flags
-dataset_folder = '../viscomp/';
-cache_folder   = '../cache/image';
-dataset        = 'train';
-feature        = 'hog2x2'; % select only from hog2x2, hog3x3, sift(slow), ssim(too slow)
-debug          = true; % if enabled, we will use small subset of data
-
-if exist('sigma_inv_half', 'var')
-    flag_white = true;
-else
-    flag_white = false;
-end
-
-
 %% Load annotations
-filename = fullfile('../cache/annotations_val.mat');
+filename = sprintf('../cache/annotations_%s.mat', dataset);
 if exist(filename, 'file')
     load(filename);
-    annotations = annotations_val;
+    if(strcmp(dataset, 'val') == 1)
+        annotations = annotations_val;
+    elseif(strcmp(dataset, 'test') == 1)
+        annotations = annotations_test;
+    end
 else
     error('cannot load %s\n', filename)
 end
 
 
-if debug
-    num_imgs = 10;
+if flag_debug
+    num_imgs = debug_num_imgs;
 else
     num_imgs = length(annotations);
 end
 
+c = conf();
+
 %% Extract features for SVM validation
 fprintf('extracting features for SVM validation...');
-filename = fullfile(cache_folder, sprintf('validation_data_%s.mat', cls));
+filename = fullfile(cache_folder, sprintf('x_%s_%s.mat', dataset, cls));
 if exist(filename, 'file')
     load(filename);
 else
     Xall = zeros(0,0);
-    Yall = zeros(0,0);
     for i = 1:num_imgs
         % Read an image
         img = imread(fullfile(dataset_folder, dataset, 'images', [annotations{i}.annotation.filename '.jpg']));
@@ -88,12 +80,12 @@ else
           feat = feat';
         end
 
-        x = zeros(1, dic_size);
+        x = zeros(1, size(dictionary, 1));
         for k = 1:size(feat, 1)
           % Find the closest centroid
           closest_l = 0;
           min_dist = inf;
-          for l = 1:dic_size
+          for l = 1:size(dictionary, 1)
             dist = dictionary(l,:) - feat(k,:);
             dist = sum(dist .^ 2);
             if dist < min_dist
@@ -105,15 +97,31 @@ else
         end
         x = x ./ (sum(x) + eps); % normalize
         Xall(end+1,:) = x;
-
-        % Get a label based on the annotation
-        Yall(end+1,1) = str2double(annotations{i}.annotation.classes.(cls));
     end
 
-    save(filename, 'Xall', 'Yall');
+    save(filename, 'Xall');
 end
 fprintf('done\n');
 
+
+%% Creating Y
+fprintf('extracting features for SVM validation...');
+filename = fullfile(cache_folder, sprintf('y_%s_%s.mat', dataset, cls));
+if exist(filename, 'file')
+    load(filename);
+else
+    Yall = zeros(0,0);
+    for i = 1:num_imgs
+        % Get a label based on the annotation
+        if(strcmp(dataset, 'val') == 1)
+            Yall(end+1,1) = str2double(annotations{i}.annotation.classes.(cls));
+        else
+            Yall(end+1,1) = 0;
+        end
+    end
+    save(filename, 'Yall');
+end
+fprintf('done\n');
 
 %% Calculate confidences for the validation data
 [~, ~, prob] = predict(Yall, sparse(Xall), model);
@@ -143,14 +151,24 @@ load(fullfile(devkit_folder, 'classes.mat')); % load classes
 average_precision = zeros(length(classes), 1);
   
 % compute average precision, using rand to predict the confidence for each image
+%{
 for i=1:length(classes)
     ground_truth_labels = cellfun(@(x) str2double(x.annotation.classes.(classes{i})),annotations_val);
+    ground_truth_labels = ground_truth_labels(1:length(prob));
     
     % predicted_labels = rand(size(annotations_val));
     average_precision(i) = computeAP(predicted_labels(i,:)', ground_truth_labels, 1)*100;
     fprintf('class: %s, average precision: %.02f%%\n', classes{i}, average_precision(i));
 end
 fprintf('mean average precision: %.02f%%\n', mean(average_precision));
+%}
+
+AP = 0;
+if(strcmp(dataset, 'val') == 1)
+    ground_truth_labels = cellfun(@(x) str2double(x.annotation.classes.(cls)),annotations_val);
+    ground_truth_labels = ground_truth_labels(1:length(prob));
+    % predicted_labels = rand(size(annotations_val));
+    AP = computeAP(prob, ground_truth_labels, 1)*100;
 end
 
 end

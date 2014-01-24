@@ -1,16 +1,7 @@
 function [dictionary, sigma_inv_half, mu] = buildDictionary()
+globals();
+
 % Build a dictionary using training data
-
-dataset_folder = '../viscomp/';
-devkit_folder  = '../devkit/';
-cache_folder   = '../cache/image';
-dataset        = 'train';
-feature        = 'hog2x2'; % select only from hog2x2, hog3x3, sift(slow), ssim(too slow)
-desc_per_img   = 100; % shouldn't change
-dic_size       = 1000; % should change
-flag_white     = true;
-debug          = true; % if enabled, we will use small subset of data
-
 %% Load dataset
 filename = fullfile('../cache/annotations_train.mat');
 if exist(filename, 'file')
@@ -22,8 +13,8 @@ end
 %% Extract features for dictionary
 annotations = annotations_train;
 num_imgs = length(annotations);
-if debug
-    num_imgs = 10;
+if flag_debug
+    num_imgs = debug_num_imgs;
 end
 c = conf();
 
@@ -35,7 +26,7 @@ else
     descriptors = zeros(0, 0);
     for i = 1:num_imgs
         % Read an image
-        img = imread(fullfile(dataset_folder, dataset, 'images', [annotations{i}.annotation.filename '.jpg']));
+        img = imread(fullfile(dataset_folder, 'train', 'images', [annotations{i}.annotation.filename '.jpg']));
 
         % Make sure the image is color
         if size(img, 3) == 1

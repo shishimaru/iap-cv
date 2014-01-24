@@ -15,8 +15,7 @@ load('classes.mat');
 
 % check error of class size
 if(size(confidence, 2) ~= length(classes)), 
-    fprintf('Dimention of confidence must be same to classes %d\n', length(classes));
-    pause;
+    error('Dimention of confidence must be same to classes %d\n', length(classes));
 end
 
 % load annotations
@@ -31,8 +30,7 @@ fprintf('done\n');
 
 % check error of vector size
 if(size(confidence, 1) > length(annotations)),
-    fprintf('Vector size of confidence is larger than one of annotations\n');
-    pause;
+    error('Vector size of confidence is larger than one of annotations\n');
 end
 
 % get the list of image names for test data as shown below
