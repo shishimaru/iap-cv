@@ -1,7 +1,7 @@
 % this demo shows how to create file for upload to submit your final results
 
 % IMPORTANT: UPDATE DATASET FOLDER
-dataset_folder = '../viscomp/';
+dataset_folder = '../viscomp_new/viscomp/';
 
 % load information about test data
 load('classes.mat');
