@@ -82,8 +82,9 @@ Xtest = Xtest ./ repmat((max_val - min_val), [size(Xtest,1) 1]);
 
 
 %% Train SVM
-%svm_c_cand = [0.05 0.06 0.07 0.08 0.09 0.1 0.11 0.12 0.13 0.14 0.15];
-svm_c_cand = 0.05:0.001:0.2;
+svm_c_cand = [0.01 0.1 1 10];
+%svm_c_cand = 0.05:0.001:0.2;
+svm_type = 1; % 0: linear-kernel, 1:RBF-kernel
 
 result_AP = zeros(length(classes), length(svm_c_cand));
 
@@ -92,15 +93,22 @@ for iii = 1:length(svm_c_cand)
     fprintf('----- svm_c = %d -----\n', svm_c);
     % train
     for i = 1:length(classes)
+        % modify training data so that liblinear and libSVM can correctly work
+        idx = find(ytrain(:,i)==1);
+        X = Xtrain;
+        X(1,:) = Xtrain(idx(1),:);
+        X(idx(1),:) = Xtrain(1,:);
+        Y = ytrain(:,i);
+        Y(1) = ytrain(idx(1),i);
+        Y(idx(1)) = ytrain(1,i);
+
         %svm_c = 1;
-        opt = sprintf('-s 2 -B 1 -c %f -q', svm_c);
-        model{i} = train(ytrain(:,i), sparse(double(Xtrain)), opt);
-        %model{i} = svmtrain(ytrain(:,i), sparse(double(Xtrain)), '-s 0 -t 2 -q');
-        
-        % Reverse weights
-        if model{i}.Label(1) == 0
-            model{i}.w = -model{i}.w;
-            model{i}.Label = [1;0];
+        if svm_type == 0
+            opt = sprintf('-s 2 -B 1 -c %f -q', svm_c);
+            model{i} = train(Y, sparse(double(X)), opt);
+        elseif svm_type == 1
+            opt = sprintf('-s 0 -t 2 -c %f -q', svm_c);
+            model{i} = svmtrain(Y, sparse(double(X)), opt);
         end
     end
     
@@ -108,8 +116,11 @@ for iii = 1:length(svm_c_cand)
         % compute AP
         accuracies = zeros(size(classes,2),1);
         for i = 1:length(classes)
-            [~, ~, prob] = predict(ytrain(:,i), sparse(double(Xtrain)), model{i}, '-q');
-            %[~, ~, prob] = svmpredict(ytrain(:,i), sparse(double(Xtrain)), model{i}, '-q');
+            if svm_type == 0
+               [~, ~, prob] = predict(ytrain(:,i), sparse(double(Xtrain)), model{i}, '-q');
+            elseif svm_type == 1
+                [~, ~, prob] = svmpredict(ytrain(:,i), sparse(double(Xtrain)), model{i}, '-q');
+            end
             AP = computeAP(prob, ytrain(:,i), 1)*100;
             accuracies(i, 1) = AP;
             fprintf('Train Accuracy (%13s) : %0.3f%%\n', classes{i}, AP);
@@ -122,8 +133,11 @@ for iii = 1:length(svm_c_cand)
     % compute AP
     accuracies = zeros(size(classes,2),1);
     for i = 1:length(classes)
-        [~, ~, prob] = predict(yval(:,i), sparse(double(Xval)), model{i}, '-q');
-        %[~, ~, prob] = svmpredict(yval(:,i), sparse(double(Xval)), model{i}, '-q');
+        if svm_type == 0
+            [~, ~, prob] = predict(yval(:,i), sparse(double(Xval)), model{i}, '-q');
+        elseif svm_type == 1
+            [~, ~, prob] = svmpredict(yval(:,i), sparse(double(Xval)), model{i}, '-q');
+        end
         AP = computeAP(prob, yval(:,i), 1)*100;
         accuracies(i, 1) = AP;
         fprintf('Val Accuracy (%13s) : %0.3f%%\n', classes{i}, AP);
@@ -145,8 +159,11 @@ if 0
     % predict
     probs = [];
     for i =1:length(classes)
-        [~, ~, prob] = predict(zeros(size(Xtest,1),1), sparse(double(Xtest)), model{i}, '-q');
-        %[~, ~, prob] = svmpredict(zeros(size(Xtest,1),1), sparse(double(Xtest)), model{i}, '-q');
+        if svm_type == 0
+            [~, ~, prob] = predict(zeros(size(Xtest,1),1), sparse(double(Xtest)), model{i}, '-q');
+        elseif svm_type == 1
+            [~, ~, prob] = svmpredict(zeros(size(Xtest,1),1), sparse(double(Xtest)), model{i}, '-q');
+        end
         probs(end+1,:) = prob;
     end
     serialize(probs', 'test');
