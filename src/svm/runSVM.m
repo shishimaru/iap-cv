@@ -65,26 +65,53 @@ if(flag_debug)
     Xtest  = Xtest(1:debug_num_imgs, :);
 end
 
-%% Normalize
-% train
-min_val = min(Xtrain);
-max_val = max(Xtrain);
-Xtrain = Xtrain - repmat(min_val, [size(Xtrain,1) 1]);
-Xtrain = Xtrain ./ repmat((max_val - min_val), [size(Xtrain,1) 1]);
+%% Polynomialize
+Xtrain = [Xtrain, Xtrain.^2];
+Xval = [Xval, Xval.^2];
+Xtest = [Xtest, Xtest.^2];
 
-% val
-Xval = Xval - repmat(min_val, [size(Xval,1) 1]);
-Xval = Xval ./ repmat((max_val - min_val), [size(Xval,1) 1]);
+%% Normalize or Whitening
+if 1
+    if 0
+        [Xtrain, mu, sigma] = featureNormalize(Xtrain);
+        Xval = featureNormalize(Xval, mu, sigma);
+        Xtest = featureNormalize(Xtest, mu, sigma);
+    elseif 1
+        % train
+        min_val = min(Xtrain);
+        max_val = max(Xtrain);
+        Xtrain = bsxfun(@minus, Xtrain, min_val);
+        Xtrain = bsxfun(@rdivide, Xtrain, (max_val - min_val));
 
-% test
-Xtest = Xtest - repmat(min_val, [size(Xtest,1) 1]);
-Xtest = Xtest ./ repmat((max_val - min_val), [size(Xtest,1) 1]);
+        Xval = bsxfun(@minus, Xval, min_val);
+        Xval = bsxfun(@rdivide, Xval, (max_val - min_val));
 
+        Xtest = bsxfun(@minus, Xtest, min_val);
+        Xtest = bsxfun(@rdivide, Xtest, (max_val - min_val));
+    end
+else
+    % get statistics of Xtrain
+    sigma = cov(Xtrain);
+    mu = mean(Xtrain);
+    sigma_inv_half = sigma ^ (-0.5);
+
+    % train
+    Xtrain = sigma_inv_half * (Xtrain' - repmat(mu', [1 size(Xtrain,1)]));
+    Xtrain = Xtrain';
+
+    % val
+    Xval = sigma_inv_half * (Xval' - repmat(mu', [1 size(Xval,1)]));
+    Xval = Xval';
+
+    % test
+    Xtest = sigma_inv_half * (Xtest' - repmat(mu', [1 size(Xtest,1)]));
+    Xtest = Xtest';
+end
 
 %% Train SVM
-svm_c_cand = [0.01 0.1 1 10];
-%svm_c_cand = 0.05:0.001:0.2;
-svm_type = 1; % 0: linear-kernel, 1:RBF-kernel
+%svm_c_cand = [0.01:0.01:0.1];
+svm_c_cand = 0.05:0.001:0.2;
+svm_type = 0; % 0: linear-kernel, 1:RBF-kernel
 
 result_AP = zeros(length(classes), length(svm_c_cand));
 
@@ -105,6 +132,7 @@ for iii = 1:length(svm_c_cand)
         %svm_c = 1;
         if svm_type == 0
             opt = sprintf('-s 2 -B 1 -c %f -q', svm_c);
+            %opt = svm_options{i};
             model{i} = train(Y, sparse(double(X)), opt);
         elseif svm_type == 1
             opt = sprintf('-s 0 -t 2 -c %f -q', svm_c);
@@ -168,3 +196,4 @@ if 0
     end
     serialize(probs', 'test');
 end
+
