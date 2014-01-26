@@ -39,10 +39,10 @@ else
         c_ymin = inf;
         c_ymax = -inf;
         for j = 1:length(annotations{i}.annotation.object)
-            xmin = round(str2double(annotations{i}.annotation.object(j).bndbox.xmin)+1);
-            xmax = round(str2double(annotations{i}.annotation.object(j).bndbox.xmax)+1);
-            ymin = round(str2double(annotations{i}.annotation.object(j).bndbox.ymin)+1);
-            ymax = round(str2double(annotations{i}.annotation.object(j).bndbox.ymax)+1);
+            xmin = round(str2double(annotations{i}.annotation.object(j).bndbox.xmin));
+            xmax = round(str2double(annotations{i}.annotation.object(j).bndbox.xmax));
+            ymin = round(str2double(annotations{i}.annotation.object(j).bndbox.ymin));
+            ymax = round(str2double(annotations{i}.annotation.object(j).bndbox.ymax));
             if(xmin < c_xmin), c_xmin = xmin; end;
             if(xmax > c_xmax), c_xmax = xmax; end;
             if(ymin < c_ymin), c_ymin = ymin; end;
@@ -60,7 +60,11 @@ else
           pause;
           close(111);
         else
+            try
           img = img(c_ymin:c_ymax,c_xmin:c_xmax,:);
+            catch
+                keyboard;
+            end
         end
 
         % Extract descriptors
