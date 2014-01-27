@@ -19,7 +19,6 @@ grad = zeros(size(theta));
 
 % Cost
 hypo = sigmoid(X * theta);
-% hypo = repmat(hypo, 1, size(y,2));
 J = sum(-y .* log(hypo) - (1 - y) .* log(1 - hypo)) ./ m;
 J = J + sum(power(theta(2:end), 2)) .* lambda ./ (2 * m);
 

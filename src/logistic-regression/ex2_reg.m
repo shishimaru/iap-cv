@@ -4,15 +4,10 @@ globals();
 featureDL_folder = '../feature-deeplearning';
 [annotations_train, annotations_val, annotations_test] = loadAnnotations();
 load(fullfile(devkit_folder, 'classes.mat')); % load classes
+FLAG_NORMALIZE = false;
+FLAG_POLYNOMIAL = false;
 
 %% Load Data
-%  The first two columns contains the X values and the third column
-%  contains the label (y).
-%{
-data = load('ex2data2.txt');
-X = data(:, [1, 2]); y = data(:, 3);
-%}
-
 Xtrain = []; Xval = []; Xtest = [];
 ytrain = []; yval = [];
 %%  load train
@@ -71,23 +66,52 @@ if(flag_debug)
     Xtest  = Xtest(1:debug_num_imgs, :);
 end
 
+%% Polynomial
+if FLAG_POLYNOMIAL
+    Xtrain = [Xtrain Xtrain.^2];
+    Xval = [Xval Xval.^2];
+    Xtest = [Xtest Xtest.^2];
+end
+
+%% Normalize
+if FLAG_NORMALIZE
+    [Xtrain, mu, sigma] = lr_featureNormalize(Xtrain);
+    Xval = (Xval - repmat(mu, size(Xval,1), 1)) ./ repmat(sigma, size(Xval,1), 1);
+    Xtest = (Xtest - repmat(mu, size(Xtest,1), 1)) ./ repmat(sigma, size(Xtest,1), 1);
+end
+
+%% Add bias
+Xtrain = [ones(size(Xtrain,1),1) Xtrain];
+Xval = [ones(size(Xval,1),1) Xval];
+Xtest = [ones(size(Xtest,1),1) Xtest];
+
+%% ============= Part 1: Select best parameters        =============
+if 0
+    [AP, LAMBDA, ALPHA] = lr_selectParam(classes, Xtrain, ytrain, Xval, yval);
+    fprintf('BEST AP: %0.3f%%, LAMBDA: %f, ALPHA: %f\n', AP, LAMBDA, ALPHA);
+    pause;
+else
+    if FLAG_NORMALIZE % normalize
+        LAMBDA = 30;
+        ALPHA = 5;
+    elseif FLAG_POLYNOMIAL % polynomial AP=71.534%
+        LAMBDA = 0.02
+        ALPHA = 150;
+    else % no nomalize/polynomial AP=71.678%
+        LAMBDA = 0.02;
+        ALPHA = 175;
+        
+        Xtrain = [Xtrain; Xval];
+        ytrain = [ytrain; yval];
+    end
+end;
+
 %% ============= Part 2: Regularization and Accuracies =============
-%  Optional Exercise:
-%  In this part, you will get to try different values of lambda and 
-%  see how regularization affects the decision coundart
-%
-%  Try the following values of lambda (0, 1, 10, 100).
-%
-%  How does the decision boundary change when you vary lambda? How does
-%  the training set accuracy vary?
-
-% Set regularization parameter lambda to 1 (you should vary this)
-
 % Optimize
 fprintf('computing thetas...\n');
-LAMBDA = 0.1; % 0.1
-ALPHA = 1;    % 1
-ITER = 1000;  % 1000
+% LAMBDA = 0.1; % 0.03
+% ALPHA = 1;    % 60
+ITER = 2000;  % 2000
 filename = fullfile(cache_folder, '/',...
     sprintf('lr_thetas_L%0.5f_A%0.5f_I%d.mat', LAMBDA, ALPHA, ITER))
 if exist(filename, 'file')
@@ -101,14 +125,12 @@ else
             [J, grad] = costFunctionReg(theta, Xtrain,...
                 ytrain(:,i), LAMBDA);
             theta = theta - ALPHA * grad;
-            %{
+            
             if(mod(j, 10) == 0)
-                fprintf('cost : %0.03f\n', J);
+                fprintf('cost : %0.4f\n', J);
             end
-            %}
+            
         end
-        
-        
         thetas(:,end+1) = theta;
         fprintf('done %s\n', classes{i});
     end
@@ -131,16 +153,6 @@ hold off;
 %}
 
 %% Compute accuracy on our training set
-%{
-accuracies = zeros(size(classes,2),1);
-for i=1:size(classes,2)
-    p = mypredict(thetas(:,i), Xtrain);
-    accuracy = mean(double(p == ytrain(:,i))) * 100;
-    accuracies(i, 1) = accuracy;
-    fprintf('Train Accuracy (%10s) : %f\n', classes{i}, accuracy);
-end;
-fprintf('Train Accuracy Average : %f\n', mean(accuracies)); 
-%}
 accuracies = zeros(size(classes,2),1);
 for i=1:size(classes,2)
     prob = Xtrain * thetas(:,i);
@@ -151,16 +163,6 @@ end;
 fprintf('Train Accuracy Average : %0.3f%%\n', mean(accuracies)); 
 
 %% Compute accuracy on our validation set
-%{
-accuracies = zeros(size(classes,2),1);
-for i=1:size(classes,2)
-    p = mypredict(thetas(:,i), Xval);
-    accuracy = mean(double(p == yval(:,i))) * 100;
-    accuracies(i, 1) = accuracy;
-    fprintf('Val Accuracy (%10s) : %f\n', classes{i}, accuracy);
-end;
-fprintf('Val Accuracy Average : %f\n', mean(accuracies)); 
-%}
 accuracies = zeros(size(classes,2),1);
 for i=1:size(classes,2)
     prob = Xval * thetas(:,i);
