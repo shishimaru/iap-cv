@@ -1,8 +1,13 @@
 %% init
+
+if 1
+
 clear all; close all; clc
 globals();
 featureDL_folder = '../feature-deeplearning';
 feature_BoF_folder = '../feature-BoF';
+feature_GIST_folder = '../feature-gist';
+feature_GLCM_folder = '../feature-texture';
 [annotations_train, annotations_val, annotations_test] = loadAnnotations();
 load(fullfile(devkit_folder, 'classes.mat')); % load classes
 
@@ -57,26 +62,47 @@ for i=1:25,
 end
 fprintf('done\n');
 
+scale = 0.25;
+
 % load additional train
 fprintf('loading additional Xtrain...');
-filename = sprintf('%s/BoF_train.mat', feature_BoF_folder);
+filename = sprintf('%s/SIFT_train.mat', feature_BoF_folder);
+%filename = sprintf('%s/GIST_train.mat', feature_GIST_folder);
+%filename = sprintf('%s/GLCM_train.mat', feature_GLCM_folder);
 tmp = load(filename);
-Xtrain = [Xtrain, tmp.Xtrain];
+Xtrain = [Xtrain, tmp.SIFT_train*scale];
 fprintf('done\n');
 
 % load additional train
 fprintf('loading additional Xval...');
-filename = sprintf('%s/BoF_val.mat', feature_BoF_folder);
+filename = sprintf('%s/SIFT_val.mat', feature_BoF_folder);
+%filename = sprintf('%s/GIST_val.mat', feature_GIST_folder);
+%filename = sprintf('%s/GLCM_val.mat', feature_GLCM_folder);
 tmp = load(filename);
-Xval = [Xval, tmp.Xval];
+Xval = [Xval, tmp.SIFT_val*scale];
 fprintf('done\n');
 
 % load additional train
 fprintf('loading additional Xtest...');
-filename = sprintf('%s/BoF_test.mat', feature_BoF_folder);
+filename = sprintf('%s/SIFT_test.mat', feature_BoF_folder);
+%filename = sprintf('%s/GIST_test.mat', feature_GIST_folder);
+%filename = sprintf('%s/GLCM_test.mat', feature_GLCM_folder);
 tmp = load(filename);
-Xtest = [Xtest, tmp.Xtest];
+Xtest = [Xtest, tmp.SIFT_test*scale];
 fprintf('done\n');
+
+
+
+
+% load additional features (bbox)
+fprintf('loading bndbox features...');
+filename = '../feature-bndbox.mat';
+tmp = load(filename);
+Xtrain = [Xtrain, tmp.box_feature_train];
+Xval = [Xval, tmp.box_feature_val];
+Xtest = [Xtest, tmp.box_feature_test];
+fprintf('done\n');
+
 
 
 %% DEBUG : shrink the image size
@@ -135,9 +161,16 @@ else
     % No normalization
 end
 
+
+end
+
+
+
 %% Train SVM
-svm_c_cand = 0.1:0.01:3.0;
-%svm_c_cand = 1;% for submission
+%svm_c_cand = [1.8:0.06:2.2];
+%svm_c_cand = [4 5 6];
+%svm_c_cand = [0.1:0.1:0.7];
+svm_c_cand = 1;% for submission
 svm_type = 0; % 0: linear-kernel, 1:RBF-kernel
 
 result_AP = zeros(length(classes), length(svm_c_cand));
@@ -156,10 +189,9 @@ for iii = 1:length(svm_c_cand)
         Y(1) = ytrain(idx(1),i);
         Y(idx(1)) = ytrain(1,i);
 
-        %svm_c = 1;
         if svm_type == 0
-            opt = sprintf('-s 2 -B 1 -c %f -q', svm_c);
-            %opt = svm_options{i};
+            %opt = sprintf('-s 2 -B 1 -c %f -q', svm_c);
+            opt = svm_options{i};
             models{i} = train(Y, sparse(double(X)), opt);
             models{i}.type = 'linear-SVM';
         elseif svm_type == 1
