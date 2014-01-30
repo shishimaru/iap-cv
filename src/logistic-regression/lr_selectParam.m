@@ -12,9 +12,20 @@ fprintf('start selecting best params...\n');
 % ALPHAS  = [10 30 50 55 60 65 70 100 150 200 300];
 
 % For no polynomial/normalization
-LAMBDAS = [0.02 0.0225 0.025 0.0275 0.03 0.0325 0.035];% 0.04 0.06 0.1];
-%ALPHAS  = [10 30 50 55 60 65 70 100 150 200 300];
-ALPHAS  = [100 125 150 175 200];
+% LAMBDAS = [0.02 0.0225 0.025 0.0275 0.03 0.0325 0.035];% 0.04 0.06 0.1];
+% ALPHAS  = [100 125 150 175 200];
+
+% For no polynomial/normalization + BoF features
+% LAMBDAS = [0.003 0.004 0.005 0.006 0.007];
+% ALPHAS  = [70 75 80];
+
+% For no polynomial/normalization + BoF features + Bndbox
+%LAMBDAS = [0.001 0.003 0.006 0.01 0.013 0.016 0.02];
+%ALPHAS  = [80 90 100 110 120];
+
+% For no polynomial/normalization + BoF features + Bndbox + SIFT
+LAMBDAS = [0.001 0.005 0.01 0.02];
+ALPHAS  = [80];
 
 ITER = 2000;  % 2000
 
@@ -26,7 +37,7 @@ for idx_lambda=1:length(LAMBDAS)
     LAMBDA = LAMBDAS(1,idx_lambda);
     for idx_alpha=1:length(ALPHAS)
         ALPHA = ALPHAS(1,idx_alpha);
-        fprintf('LAMBDA: %0.3f, ALPHA: %0.3f...\n', LAMBDA, ALPHA);
+        fprintf('LAMBDA: %0.5f, ALPHA: %0.5f...\n', LAMBDA, ALPHA);
         
         filename = fullfile(cache_folder, '/',...
             sprintf('lr_thetas_L%0.5f_A%0.5f_I%d.mat', LAMBDA, ALPHA, ITER))
@@ -51,7 +62,7 @@ for idx_lambda=1:length(LAMBDAS)
                     figure;
                     hold on;
                     plot(Jhist(:,1), Jhist(:,2));
-                    title(sprintf('LAMBDA: %0.3f, ALPHA: %0.3f', LAMBDA, ALPHA));
+                    title(sprintf('LAMBDA: %0.5f, ALPHA: %0.5f', LAMBDA, ALPHA));
                     %pause;
                     hold off;
                     %close(111);
